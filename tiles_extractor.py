@@ -2,7 +2,8 @@ from PIL import Image
 import os
 
 
-def estrai_tasselli(immagine_input, output_dir, tassello_dim, passo, input_resize=None, output_resize=None):
+def estrai_tasselli(immagine_input, output_dir, tassello_dim, passo, input_resize=None, output_resize=None,
+                    input_rotate=None, output_rotate=None):
     """
     Estrae tasselli di dimensione tassello_dim (NxM) dall'immagine fornita, con passi orizzontale e verticale.
 
@@ -12,6 +13,8 @@ def estrai_tasselli(immagine_input, output_dir, tassello_dim, passo, input_resiz
     :param passo: Tuple (Po, Pv) per definire il passo orizzontale e verticale.
     :param input_resize: Tuple opzionale per ridimensionare l'immagine di input (larghezza, altezza). Se None, non ridimensiona.
     :param output_resize: Tuple opzionale per ridimensionare i tasselli estratti (larghezza, altezza). Se None, non ridimensiona.
+    :param input_rotate: Gradi per la rotazione in senso orario dell'immagine di input (opzionale).
+    :param output_rotate: Gradi per la rotazione in senso orario dei tasselli estratti (opzionale).
     """
     # Carica l'immagine
     immagine = Image.open(immagine_input)
@@ -19,6 +22,10 @@ def estrai_tasselli(immagine_input, output_dir, tassello_dim, passo, input_resiz
     # Ridimensiona l'immagine di input se specificato
     if input_resize:
         immagine = immagine.resize(input_resize)
+
+    # Ruota l'immagine di input se specificato
+    if input_rotate:
+        immagine = immagine.rotate(-input_rotate)  # Rotazione oraria (negativa per senso orario)
 
     # Ottieni dimensioni tassello e passi
     tassello_larghezza, tassello_altezza = tassello_dim
@@ -45,8 +52,12 @@ def estrai_tasselli(immagine_input, output_dir, tassello_dim, passo, input_resiz
             if output_resize:
                 tassello = tassello.resize(output_resize)
 
+            # Ruota il tassello estratto se output_rotate è specificato
+            if output_rotate:
+                tassello = tassello.rotate(-output_rotate)  # Rotazione oraria (negativa per senso orario)
+
             # Salva il tassello nella cartella di output
-            tassello_filename = f"tassello_{tassello_count}.png"
+            tassello_filename = f"tiles_{tassello_count}.png"
             tassello_path = os.path.join(output_dir, tassello_filename)
             tassello.save(tassello_path)
             tassello_count += 1
@@ -54,13 +65,50 @@ def estrai_tasselli(immagine_input, output_dir, tassello_dim, passo, input_resiz
     print(f"Processo completato! {tassello_count} tasselli salvati in {output_dir}.")
 
 
-# Esempio di utilizzo
-immagine_input = "R.png"
-output_dir = "cartella_di_output"
-tassello_dim = (50, 50)  # Tasselli di dimensione 50x50
-passo = (25, 25)  # Passo orizzontale e verticale di 25 pixel
-input_resize = (150, 150)  # Ridimensiona l'immagine di input (opzionale)
-output_resize = (150, 150)  # Ridimensiona i tasselli estratti (opzionale)
+def processa_directory(directory_input, directory_output, tassello_dim, passo, input_resize=None, output_resize=None,
+                       input_rotate=None, output_rotate=None):
+    """
+    Processa tutte le immagini contenute nella directory di input, estraendo tasselli per ciascuna immagine.
+    Per ogni immagine, crea una sottocartella nella directory di output con il nome dell'immagine, e salva i tasselli.
 
-# Chiamata della funzione
-estrai_tasselli(immagine_input, output_dir, tassello_dim, passo, input_resize, output_resize)
+    :param directory_input: Directory contenente le immagini di input.
+    :param directory_output: Directory dove verranno salvati i tasselli estratti.
+    :param tassello_dim: Dimensione dei tasselli (larghezza, altezza).
+    :param passo: Passo orizzontale e verticale (Po, Pv).
+    :param input_resize: Ridimensionamento dell'immagine di input (opzionale).
+    :param output_resize: Ridimensionamento dei tasselli estratti (opzionale).
+    :param input_rotate: Rotazione dell'immagine di input in gradi (opzionale).
+    :param output_rotate: Rotazione dei tasselli estratti in gradi (opzionale).
+    """
+    # Ottiene la lista di tutte le immagini nella directory di input
+    immagini = [f for f in os.listdir(directory_input) if os.path.isfile(os.path.join(directory_input, f))]
+
+    # Processa ogni immagine
+    for immagine in immagini:
+        # Ottieni il percorso completo dell'immagine di input
+        immagine_input = os.path.join(directory_input, immagine)
+
+        # Estrai il nome del file senza estensione
+        nome_immagine = os.path.splitext(immagine)[0]
+
+        # Crea una sottocartella nella directory di output per questa immagine
+        sottocartella_output = os.path.join(directory_output, nome_immagine)
+
+        # Applica la funzione estrai_tasselli su ogni immagine
+        estrai_tasselli(immagine_input, sottocartella_output, tassello_dim, passo, input_resize, output_resize,
+                        input_rotate, output_rotate)
+
+if __name__ == "__main__":
+    # Esempio di utilizzo
+    directory_input = "cartella_di_input/capture_frame_analisi_difetti_cropped_full"
+    directory_output = "cartella_di_output/capture_frame_analisi_difetti_cropped_full"
+    tassello_dim = (256, 256)  # Tasselli di dimensione 50x50
+    passo = (128, 128)  # Passo orizzontale e verticale di 25 pixel
+    input_resize = None #(150, 150)  # Ridimensiona l'immagine di input (opzionale)
+    output_resize = None #(512, 512)  # Ridimensiona i tasselli estratti (opzionale)
+    input_rotate = None #45  # Rotazione in senso orario dell'immagine di input (opzionale)
+    output_rotate = None #30  # Rotazione in senso orario dei tasselli estratti (opzionale)
+
+    # Chiamata della funzione per processare tutte le immagini nella directory
+    processa_directory(directory_input, directory_output, tassello_dim, passo, input_resize, output_resize, input_rotate,
+                       output_rotate)

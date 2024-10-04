@@ -3,7 +3,7 @@ import base64
 import json
 
 # URL del server API
-API_URL = 'http://localhost:7860'
+API_URL = 'http://localhost:7861'
 
 # Funzione per caricare e codificare un'immagine in Base64 senza prefisso
 def load_image_base64(file_path):

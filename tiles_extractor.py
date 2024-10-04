@@ -1,6 +1,6 @@
 from PIL import Image
 import os
-
+import shutil
 
 def estrai_tasselli(immagine_input, output_dir, tassello_dim, passo, input_resize=None, output_resize=None,
                     input_rotate=None, output_rotate=None):
@@ -98,6 +98,39 @@ def processa_directory(directory_input, directory_output, tassello_dim, passo, i
         estrai_tasselli(immagine_input, sottocartella_output, tassello_dim, passo, input_resize, output_resize,
                         input_rotate, output_rotate)
 
+
+def organize_tiles_by_position(input_dir):
+    # Creazione del path per la cartella di output
+    output_dir = input_dir.rstrip('/') + '_reverse'
+
+    # Creazione della nuova directory di output
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Itera sulle sottocartelle 'frame_0000', 'frame_0001', etc.
+    for frame_folder in sorted(os.listdir(input_dir)):
+        frame_folder_path = os.path.join(input_dir, frame_folder)
+        if os.path.isdir(frame_folder_path):
+            # Itera sulle immagini dei tiles in ogni frame
+            for tile_filename in sorted(os.listdir(frame_folder_path)):
+                tile_index = tile_filename.split('_')[-1]  # Identifica il numero del tile
+                tile_folder_name = f'tile_{tile_index}'
+                tile_folder_path = os.path.join(output_dir, tile_folder_name)
+
+                # Creazione della cartella per i tiles se non esiste
+                if not os.path.exists(tile_folder_path):
+                    os.makedirs(tile_folder_path)
+
+                # Copia l'immagine nella cartella del tile appropriato
+                source_path = os.path.join(frame_folder_path, tile_filename)
+                destination_path = os.path.join(tile_folder_path, f'{frame_folder}_{tile_filename}')
+
+                shutil.copy(source_path, destination_path)
+
+    print(f"Organizzazione completata. Immagini salvate in: {output_dir}")
+
+
+
 if __name__ == "__main__":
     # Esempio di utilizzo
     directory_input = "cartella_di_input/capture_frame_analisi_difetti_cropped_full"
@@ -110,5 +143,7 @@ if __name__ == "__main__":
     output_rotate = None #30  # Rotazione in senso orario dei tasselli estratti (opzionale)
 
     # Chiamata della funzione per processare tutte le immagini nella directory
-    processa_directory(directory_input, directory_output, tassello_dim, passo, input_resize, output_resize, input_rotate,
-                       output_rotate)
+    #processa_directory(directory_input, directory_output, tassello_dim, passo, input_resize, output_resize, input_rotate,
+    #                   output_rotate)
+
+    organize_tiles_by_position(directory_output)

@@ -1,0 +1,2 @@
+[server]
+maxUploadSize = 1024  # Set this to the desired maximum upload size in megabytes (e.g., 1024 for 1GB)
